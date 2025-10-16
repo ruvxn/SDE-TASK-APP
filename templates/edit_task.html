@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Task - {{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <h1>Edit Task</h1>
+        <p class="form-subtitle">Project: {{ project.name }}</p>
+
+        <form method="POST" action="{{ url_for('edit_task', task_id=task.id) }}">
+            <div class="form-group">
+                <label for="title">Task Title</label>
+                <input type="text" id="title" name="title" required minlength="3"
+                       value="{{ request.form.get('title', task.title) }}">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4">{{ request.form.get('description', task.description) }}</textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" id="start_date" name="start_date"
+                           value="{{ request.form.get('start_date', task.start_date.strftime('%Y-%m-%d') if task.start_date else '') }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="expected_completion_date">Expected Completion</label>
+                    <input type="date" id="expected_completion_date" name="expected_completion_date"
+                           value="{{ request.form.get('expected_completion_date', task.expected_completion_date.strftime('%Y-%m-%d') if task.expected_completion_date else '') }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="importance">Importance</label>
+                <select id="importance" name="importance">
+                    <option value="low" {% if request.form.get('importance', task.importance) == 'low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if request.form.get('importance', task.importance) == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if request.form.get('importance', task.importance) == 'high' %}selected{% endif %}>High</option>
+                </select>
+            </div>
+
+            {% if available_tasks %}
+            <div class="form-group">
+                <label>Dependencies (tasks that must be completed first)</label>
+                <div class="checkbox-group">
+                    {% set current_deps = task.dependencies.all() %}
+                    {% set current_dep_ids = [d.id for d in current_deps] %}
+                    {% for available_task in available_tasks %}
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="dep_{{ available_task.id }}" name="dependencies" value="{{ available_task.id }}"
+                               {% if available_task.id in current_dep_ids %}checked{% endif %}>
+                        <label for="dep_{{ available_task.id }}">{{ available_task.title }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <small class="help-text">This task can only be completed after the selected tasks are done</small>
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Update Task</button>
+                <a href="{{ url_for('view_project', project_id=project.id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

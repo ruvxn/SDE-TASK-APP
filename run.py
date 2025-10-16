@@ -3,6 +3,8 @@ from flask_login import LoginManager
 from models import db, User
 from config import Config
 from auth import register_auth_routes
+from projects import register_project_routes
+from tasks import register_task_routes
 
 def create_app():
     app = Flask(__name__)
@@ -20,8 +22,10 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register authentication routes
+    # Register routes
     register_auth_routes(app)
+    register_project_routes(app)
+    register_task_routes(app)
 
     # Create tables if they don't exist already
     with app.app_context():
