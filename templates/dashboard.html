@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Project Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>My Projects</h1>
+        <a href="#" class="btn btn-primary">Create New Project</a>
+    </div>
+
+    {% if projects %}
+        <div class="projects-grid">
+            {% for project in projects %}
+            <div class="project-card">
+                <h3>{{ project.name }}</h3>
+                <p>{{ project.description or 'No description' }}</p>
+                <div class="project-stats">
+                    <span>Tasks: {{ project.get_task_count() }}</span>
+                    <span>Progress: {{ project.get_completion_percentage() }}%</span>
+                </div>
+                <div class="project-meta">
+                    <small>Created: {{ project.created_at.strftime('%Y-%m-%d') }}</small>
+                    {% if project.deadline %}
+                    <small>Deadline: {{ project.deadline.strftime('%Y-%m-%d') }}</small>
+                    {% endif %}
+                </div>
+                <a href="#" class="btn btn-secondary">View Details</a>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>You don't have any projects yet.</p>
+            <a href="#" class="btn btn-primary">Create Your First Project</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

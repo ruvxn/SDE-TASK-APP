@@ -32,11 +32,35 @@ cp .env.example .env
 # Edit .env with your database credentials
 ```
 
-4. Run the application:
+4. Set up PostgreSQL database:
+
+```bash
+# Create a PostgreSQL database
+createdb project_management
+
+# Or using psql:
+psql -U postgres
+CREATE DATABASE project_management;
+\q
+```
+
+5. Initialize the database:
+
+```bash
+# Initialize database tables only
+python init_db.py
+
+# Or initialize with sample data for testing
+python init_db.py --with-data
+```
+
+6. Run the application:
 
 ```bash
 python run.py
 ```
+
+The application will be available at `http://localhost:5000`
 
 ## Tech Stack
 
