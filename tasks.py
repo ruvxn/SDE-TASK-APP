@@ -214,6 +214,44 @@ def register_task_routes(app):
         flash(f'Task "{task_title}" deleted successfully', 'success')
         return redirect(url_for('view_project', project_id=project.id))
 
+    @app.route('/tasks/<int:task_id>/complete', methods=['POST'])
+    @login_required
+    def complete_task(task_id):
+        task = Task.query.get_or_404(task_id)
+        project = task.project
+
+        # Check if user owns this project
+        if project.user_id != current_user.id:
+            flash('You do not have permission to modify this task', 'error')
+            return redirect(url_for('dashboard'))
+
+        # Get the completion status from form
+        is_completed = request.form.get('is_completed') == 'true'
+
+        if is_completed:
+            # Check if dependencies are met
+            if not task.can_be_completed():
+                flash('Cannot complete task. All dependency tasks must be completed first.', 'error')
+                return redirect(url_for('view_project', project_id=project.id))
+
+            task.is_completed = True
+            task.completed_at = datetime.utcnow()
+            flash(f'Task "{task.title}" marked as completed!', 'success')
+        else:
+            # Uncompleting - check if other tasks depend on this and are completed
+            dependent_completed = [t for t in task.dependent_tasks.all() if t.is_completed]
+            if dependent_completed:
+                dependent_titles = [t.title for t in dependent_completed]
+                flash(f'Cannot mark as incomplete. The following completed tasks depend on it: {", ".join(dependent_titles)}', 'error')
+                return redirect(url_for('view_project', project_id=project.id))
+
+            task.is_completed = False
+            task.completed_at = None
+            flash(f'Task "{task.title}" marked as incomplete', 'success')
+
+        db.session.commit()
+        return redirect(url_for('view_project', project_id=project.id))
+
 
 def would_create_circular_dependency(task, new_dependency):
     """Check if adding new_dependency to task would create a circular dependency"""

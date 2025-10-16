@@ -390,6 +390,23 @@ main {
     border-color: #3498db;
 }
 
+.task-checkbox {
+    display: flex;
+    align-items: center;
+    margin-right: 1rem;
+}
+
+.completion-form {
+    display: flex;
+    align-items: center;
+}
+
+.task-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
 .task-info {
     flex: 1;
 }
