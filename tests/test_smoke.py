@@ -1,3 +1,9 @@
+import sys, os
+from pathlib import Path
+
+# Add repo root to import path so `import run` works when pytest's rootdir is tests/
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 # tests/test_smoke.py
 import os
 import importlib
