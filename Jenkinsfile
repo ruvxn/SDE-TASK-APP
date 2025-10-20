@@ -7,20 +7,19 @@ pipeline {
     stage('Checkout') {
       steps { checkout scm }
     }
-    stage('Set up Python & Install Deps') {
-      steps {
-        sh '''
-          python3 -m venv venv
-          . venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt pytest
-        '''
+
+    stage('Unit Tests') {
+      // Run this stage in a disposable Python container that has pip ready
+      agent {
+        docker {
+          image 'python:3.11-slim'
+          args '-u 0'   // runs as root inside the container so pip can install
+        }
       }
-    }
-    stage('Run Tests') {
       steps {
         sh '''
-          . venv/bin/activate
+          pip install --no-cache-dir --upgrade pip
+          pip install --no-cache-dir -r requirements.txt pytest
           pytest -q --junitxml=pytest-results.xml
         '''
       }
@@ -30,7 +29,9 @@ pipeline {
         }
       }
     }
+
     stage('Build Docker Image') {
+      // Back on the main Jenkins agent (which has access to the host Docker socket)
       steps {
         sh 'docker build -t $IMAGE .'
       }
