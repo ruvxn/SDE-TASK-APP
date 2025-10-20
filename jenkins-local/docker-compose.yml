@@ -2,6 +2,7 @@ services:
   jenkins:
     build: .
     container_name: jenkins
+    user: "0:0" # <-- run as root to use /var/run/docker.sock
     ports:
       - "8080:8080"
       - "50000:50000"
