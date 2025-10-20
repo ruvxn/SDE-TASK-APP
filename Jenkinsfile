@@ -1,19 +1,28 @@
 pipeline {
   agent any
+  options { 
+    // Prevent the implicit "Declarative: Checkout SCM"
+    skipDefaultCheckout(true) 
+  }
   environment {
     IMAGE = "tasklist-app:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
   }
+
   stages {
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        // Make sure the workspace is clean before checking out
+        deleteDir()
+        checkout scm
+      }
     }
 
     stage('Unit Tests') {
-      // Run this stage in a disposable Python container that has pip ready
+      // Run tests inside a Python container (no venv needed)
       agent {
         docker {
           image 'python:3.11-slim'
-          args '-u 0'   // runs as root inside the container so pip can install
+          args '-u 0'   // run as root inside the container so pip can install
         }
       }
       steps {
@@ -31,12 +40,12 @@ pipeline {
     }
 
     stage('Build Docker Image') {
-      // Back on the main Jenkins agent (which has access to the host Docker socket)
       steps {
         sh 'docker build -t $IMAGE .'
       }
     }
   }
+
   post {
     success { echo "Level 1 CI pipeline finished successfully." }
     failure { echo "Level 1 CI pipeline failed." }
