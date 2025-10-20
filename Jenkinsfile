@@ -3,7 +3,7 @@ pipeline {
   options { skipDefaultCheckout(true) }
 
   environment {
-    IMAGE = "tasklist-app:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+    IMAGE = "tasklist-app:build-${env.BUILD_NUMBER}"   // safe tag
   }
 
   stages {
@@ -22,8 +22,8 @@ pipeline {
         ])
         sh '''
           echo "HEAD: $(git rev-parse HEAD)"
-          echo "Tracked tests:"
-          git ls-files "tests/**" || true
+          echo "Tracked tests:"; git ls-files "tests/**" || true
+          ls -la | sed -n '1,120p'
         '''
       }
     }
@@ -33,16 +33,13 @@ pipeline {
         docker {
           image 'python:3.11-slim'
           args '-u 0'
-          reuseNode true        // <— use SAME workspace instead of tasklist-ci@2
+          reuseNode true
         }
       }
       steps {
         sh '''
           set -euxo pipefail
-          echo "PWD: $(pwd)"
-          ls -la
-          [ -d tests ] && ls -la tests || true
-
+          export PYTHONPATH="$PWD"     # allow `import run`
           python -V
           pip install --no-cache-dir --upgrade pip
           pip install --no-cache-dir -r requirements.txt pytest
@@ -56,7 +53,11 @@ pipeline {
 
     stage('Build Docker Image') {
       steps {
-        sh 'docker build -t $IMAGE .'
+        sh '''
+          set -euxo pipefail
+          test -f Dockerfile || (echo "Missing Dockerfile at repo root"; ls -la; exit 1)
+          docker build -t "$IMAGE" .
+        '''
       }
     }
   }
