@@ -1,6 +1,7 @@
 pipeline {
   agent any
-  options { skipDefaultCheckout(true) }   // avoid the implicit checkout
+  options { skipDefaultCheckout(true) }
+
   environment {
     IMAGE = "tasklist-app:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
   }
@@ -8,7 +9,6 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        // Always get the latest main with a clean workspace
         deleteDir()
         checkout([$class: 'GitSCM',
           branches: [[name: '*/main']],
@@ -32,17 +32,21 @@ pipeline {
       agent {
         docker {
           image 'python:3.11-slim'
-          args '-u 0'   // root in container so pip can install
+          args '-u 0'
+          reuseNode true        // <— use SAME workspace instead of tasklist-ci@2
         }
       }
       steps {
         sh '''
           set -euxo pipefail
+          echo "PWD: $(pwd)"
+          ls -la
+          [ -d tests ] && ls -la tests || true
+
           python -V
           pip install --no-cache-dir --upgrade pip
           pip install --no-cache-dir -r requirements.txt pytest
-          # Run tests; if none found, print tree to diagnose
-          pytest -q --junitxml=pytest-results.xml || (echo "Pytest failed; tree:" && ls -R && exit 1)
+          pytest -q --junitxml=pytest-results.xml
         '''
       }
       post {
