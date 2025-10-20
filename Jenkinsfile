@@ -35,7 +35,13 @@ pipeline {
             steps {
                 echo 'Installing Python dependencies...'
                 sh '''
-                    pip3 install -r requirements.txt
+                    # Create virtual environment
+                    python3 -m venv venv
+
+                    # Activate and install dependencies
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
                 '''
             }
         }
@@ -44,9 +50,12 @@ pipeline {
             steps {
                 echo 'Running test suite with pytest...'
                 sh '''
+                    # Activate virtual environment
+                    . venv/bin/activate
+
                     # Set test environment variables
                     export FLASK_ENV=testing
-                    export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/project_management_test
+                    export DATABASE_URL=sqlite:///:memory:
 
                     # Run tests with coverage
                     pytest tests/ -v --cov=. --cov-report=html --cov-report=xml --cov-report=term-missing
@@ -77,8 +86,11 @@ pipeline {
             steps {
                 echo 'Running code quality checks...'
                 sh '''
+                    # Activate virtual environment
+                    . venv/bin/activate
+
                     # Install linting tools if not in requirements
-                    pip3 install flake8 pylint
+                    pip install flake8 pylint
 
                     # Run flake8 (allow failures, just report)
                     flake8 . --exclude=venv,ENV --max-line-length=120 --count --statistics || true
