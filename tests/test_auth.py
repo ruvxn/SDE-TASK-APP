@@ -60,7 +60,7 @@ class TestAuthRoutes:
         # Should show error message
         assert b'Invalid' in response.data or b'incorrect' in response.data.lower()
 
-    def test_login_with_nonexistent_user(self, client):
+    def test_login_with_nonexistent_user(self, client, db_session):
         """Test login with non-existent username"""
         response = client.post('/login', data={
             'username': 'nonexistent',
@@ -94,7 +94,7 @@ class TestAuthRoutes:
         # Should show error or stay on registration page
         assert b'exists' in response.data.lower() or b'already' in response.data.lower() or b'Register' in response.data
 
-    def test_password_mismatch_registration(self, client):
+    def test_password_mismatch_registration(self, client, db_session):
         """Test registration with mismatched passwords"""
         response = client.post('/register', data={
             'username': 'newuser2',
