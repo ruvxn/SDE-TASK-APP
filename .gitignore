@@ -35,3 +35,22 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Docker
+*.dockerignore.bak
+docker-compose.override.yml
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# CI/CD
+jenkins_home/
+.jenkins/
+
+# Deployment
+*.pem
+*.key
+deployment_logs/

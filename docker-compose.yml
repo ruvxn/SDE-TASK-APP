@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: taskapp_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-project_management}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taskapp_network
+
+  # Flask Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskapp_web
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-project_management}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      FLASK_ENV: ${FLASK_ENV:-development}
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - taskapp_network
+    command: flask run --host=0.0.0.0
+
+  # Test Runner (optional - for running tests in container)
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskapp_test
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-project_management}_test
+      SECRET_KEY: test-secret-key
+      FLASK_ENV: testing
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - taskapp_network
+    command: pytest -v
+    profiles:
+      - test
+
+volumes:
+  postgres_data:
+
+networks:
+  taskapp_network:
+    driver: bridge
