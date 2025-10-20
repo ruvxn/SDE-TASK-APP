@@ -18,26 +18,43 @@ pipeline {
     }
 
     stage('Unit Tests') {
-      // Run tests inside a Python container (no venv needed)
-      agent {
-        docker {
-          image 'python:3.11-slim'
-          args '-u 0'   // run as root inside the container so pip can install
-        }
-      }
-      steps {
-        sh '''
-          pip install --no-cache-dir --upgrade pip
-          pip install --no-cache-dir -r requirements.txt pytest
-          pytest -q --junitxml=pytest-results.xml
-        '''
-      }
-      post {
-        always {
-          junit testResults: 'pytest-results.xml', allowEmptyResults: true
-        }
-      }
+  agent {
+    docker {
+      image 'python:3.11-slim'
+      args '-u 0'   // root in the container so pip can install
     }
+  }
+  steps {
+    sh '''
+      set -euxo pipefail
+      echo ">>> Working dir:"; pwd
+      echo ">>> Python:"; python -V
+      echo ">>> Repo contents (top-level):"
+      ls -la
+      echo ">>> Tests directory (if present):"
+      [ -d tests ] && ls -la tests || true
+
+      # Install deps
+      pip install --no-cache-dir --upgrade pip
+      pip install --no-cache-dir -r requirements.txt pytest
+
+      # If pytest.ini / pyproject.toml misconfigures testpaths,
+      # ignore repo config (-c /dev/null) and explicitly point to tests/.
+      # Fall back to running from repo root if there is no tests/ dir.
+      if [ -d tests ]; then
+        pytest -q -c /dev/null tests --junitxml=pytest-results.xml
+      else
+        pytest -q -c /dev/null --junitxml=pytest-results.xml
+      fi
+    '''
+  }
+  post {
+    always {
+      junit testResults: 'pytest-results.xml', allowEmptyResults: true
+    }
+  }
+}
+
 
     stage('Build Docker Image') {
       steps {
