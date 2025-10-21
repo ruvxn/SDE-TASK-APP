@@ -6,13 +6,14 @@ from config import Config
 from auth import register_auth_routes
 from projects import register_project_routes
 from tasks import register_task_routes
+import os
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
     # Initialize Prometheus metrics (skip in test mode to avoid duplicate registration)
-    if not app.config.get('TESTING', False):
+    if os.getenv('TESTING', 'False').lower() != 'true':
         metrics = PrometheusMetrics(app)
         # Add default metrics: request count, duration, and info
         metrics.info('app_info', 'Application info', version='1.0.0')
