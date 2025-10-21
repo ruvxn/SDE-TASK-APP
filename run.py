@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_login import LoginManager
+from prometheus_flask_exporter import PrometheusMetrics
 from models import db, User
 from config import Config
 from auth import register_auth_routes
@@ -9,6 +10,11 @@ from tasks import register_task_routes
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Initialize Prometheus metrics
+    metrics = PrometheusMetrics(app)
+    # Add default metrics: request count, duration, and info
+    metrics.info('app_info', 'Application info', version='1.0.0')
 
     # Initialize database
     db.init_app(app)
@@ -36,4 +42,4 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
