@@ -62,10 +62,32 @@ pipeline {
         '''
       }
     }
+
+    stage('Deploy to EC2') {
+      when {
+        branch 'main'
+      }
+      steps {
+        script {
+          sshagent(['ec2-ssh-key']) {
+            sh '''
+              ssh -o StrictHostKeyChecking=no ubuntu@13.238.52.6 << 'EOF'
+                cd /opt/taskapp
+                git pull origin main
+                docker-compose -f docker-compose.monitoring.yml up -d --build web
+                sleep 10
+                curl -f http://localhost:5000 || exit 1
+                echo "Deployment successful!"
+EOF
+            '''
+          }
+        }
+      }
+    }
   }
 
   post {
-    success { echo 'Level 1 CI pipeline finished successfully.' }
-    failure { echo 'Level 1 CI pipeline failed.' }
+    success { echo 'Level 4 CI/CD pipeline finished successfully.' }
+    failure { echo 'Level 4 CI/CD pipeline failed.' }
   }
 }
