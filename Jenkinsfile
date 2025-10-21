@@ -39,15 +39,17 @@ pipeline {
       steps {
         sh '''
           set -euxo pipefail
-          export PYTHONPATH="$PWD"     # allow `import run`
+          export PYTHONPATH="$PWD"
           python -V
           pip install --no-cache-dir --upgrade pip
-          pip install --no-cache-dir -r requirements.txt pytest
-          pytest -q --junitxml=pytest-results.xml
+          pip install --no-cache-dir -r requirements.txt
+          pytest -v --junitxml=pytest-results.xml --tb=short
         '''
       }
       post {
-        always { junit testResults: 'pytest-results.xml', allowEmptyResults: true }
+        always {
+          junit testResults: 'pytest-results.xml', allowEmptyResults: true
+        }
       }
     }
 
