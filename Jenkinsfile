@@ -64,9 +64,6 @@ pipeline {
     }
 
     stage('Deploy to EC2') {
-      when {
-        branch 'main'
-      }
       steps {
         script {
           sshagent(['ec2-ssh-key']) {
