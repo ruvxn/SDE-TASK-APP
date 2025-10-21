@@ -11,10 +11,11 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Initialize Prometheus metrics
-    metrics = PrometheusMetrics(app)
-    # Add default metrics: request count, duration, and info
-    metrics.info('app_info', 'Application info', version='1.0.0')
+    # Initialize Prometheus metrics (skip in test mode to avoid duplicate registration)
+    if not app.config.get('TESTING', False):
+        metrics = PrometheusMetrics(app)
+        # Add default metrics: request count, duration, and info
+        metrics.info('app_info', 'Application info', version='1.0.0')
 
     # Initialize database
     db.init_app(app)

@@ -16,6 +16,8 @@ from models import db, User, Project, Task
 @pytest.fixture
 def app():
     """Create and configure app for testing"""
+    # Set TESTING before creating app to prevent Prometheus metrics registration
+    os.environ["TESTING"] = "True"
     app = create_app()
     app.config.update({
         "TESTING": True,
