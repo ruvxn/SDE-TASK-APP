@@ -2,6 +2,10 @@ pipeline {
   agent any
   options { skipDefaultCheckout(true) }
 
+  triggers {
+    pollSCM('H/2 * * * *')  // Poll GitHub every 2 minutes for changes
+  }
+
   environment {
     IMAGE = "tasklist-app:build-${env.BUILD_NUMBER}"   // safe tag
   }
